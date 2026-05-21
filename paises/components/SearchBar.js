@@ -1,20 +1,15 @@
-import {
-  View,
-  TextInput,
-  StyleSheet,
-} from "react-native";
+import React from 'react';
+import { TextInput, StyleSheet, View } from 'react-native';
 
-export default function SearchBar({
-  value,
-  onChangeText,
-}) {
+export default function SearchBar({ value, onChangeText, placeholder }) {
   return (
     <View style={styles.container}>
       <TextInput
-        placeholder="Buscar por país o capital..."
+        style={styles.input}
+        placeholder={placeholder}
+        placeholderTextColor="#888"
         value={value}
         onChangeText={onChangeText}
-        style={styles.input}
       />
     </View>
   );
@@ -22,13 +17,15 @@ export default function SearchBar({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 15,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#1E1E1E',
   },
-
   input: {
-    backgroundColor: "#fff",
-    borderRadius: 15,
-    padding: 15,
+    backgroundColor: '#2C2C2C',
+    borderRadius: 10,
+    padding: 12,
+    color: '#FFFFFF',
     fontSize: 16,
   },
 });

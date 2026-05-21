@@ -1,50 +1,30 @@
-import {
-  NavigationContainer,
-} from "@react-navigation/native";
+import React from 'react';
+import { createStackNavigator } from '@react-navigation/stack';
+import HomeScreen from '../screens/HomeScreen';
+import DetailScreen from '../screens/DetailScreen';
 
-import {
-  createDrawerNavigator,
-} from "@react-navigation/drawer";
-
-import HomeScreen from "../screens/HomeScreen";
-import DetailScreen from "../screens/DetailScreen";
-
-const Drawer =
-  createDrawerNavigator();
+const Stack = createStackNavigator();
 
 export default function StackNavigation() {
   return (
-    <NavigationContainer>
-      <Drawer.Navigator
-        screenOptions={{
-          headerStyle: {
-            backgroundColor:
-              "#1E73E8",
-          },
-
-          headerTintColor:
-            "#fff",
-        }}
-      >
-        <Drawer.Screen
-          name="Home"
-          component={HomeScreen}
-          options={{
-            title:
-              "🌍 Países",
-          }}
-        />
-
-        <Drawer.Screen
-          name="Details"
-          component={DetailScreen}
-          options={{
-            drawerItemStyle: {
-              display: "none",
-            },
-          }}
-        />
-      </Drawer.Navigator>
-    </NavigationContainer>
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: { backgroundColor: '#1E1E1E' },
+        headerTintColor: '#FFFFFF',
+        headerTitleStyle: { fontWeight: 'bold' },
+        cardStyle: { backgroundColor: '#121212' },
+      }}
+    >
+      <Stack.Screen 
+        name="Home" 
+        component={HomeScreen} 
+        options={{ title: 'Países del Mundo' }}
+      />
+      <Stack.Screen 
+        name="Detail" 
+        component={DetailScreen} 
+        options={{ title: 'Detalle del País' }}
+      />
+    </Stack.Navigator>
   );
 }

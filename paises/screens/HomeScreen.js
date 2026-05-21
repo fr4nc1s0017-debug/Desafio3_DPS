@@ -1,100 +1,164 @@
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
-  Text,
   FlatList,
-  StyleSheet,
   ActivityIndicator,
-} from "react-native";
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  RefreshControl,
+} from 'react-native';
+import { fetchAllCountries } from '../services/countriesApi';
+import SearchBar from '../components/SearchBar';
+import CountryCard from '../components/CountryCard';
 
-import {
-  useEffect,
-  useState,
-} from "react";
-import CountryCard from "../components/CountryCard";
-import { getCountries } from "../services/countriesApi";
+export default function HomeScreen({ navigation }) {
+  const [countries, setCountries] = useState([]);
+  const [filteredCountries, setFilteredCountries] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
 
-export default function HomeScreen({
-  navigation,
-}) {
-  const [countries, setCountries] =
-    useState([]);
-
-  const [loading, setLoading] =
-    useState(true);
+  const loadCountries = async () => {
+    try {
+      setError(null);
+      const data = await fetchAllCountries();
+      setCountries(data);
+      setFilteredCountries(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
     loadCountries();
   }, []);
 
-  const loadCountries = async () => {
-    const data =
-      await getCountries();
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setFilteredCountries(countries);
+    } else {
+      const query = searchQuery.toLowerCase();
+      const filtered = countries.filter(
+        (c) =>
+          c.name.toLowerCase().includes(query) ||
+          c.capital.toLowerCase().includes(query)
+      );
+      setFilteredCountries(filtered);
+    }
+  }, [searchQuery, countries]);
 
-    console.log(data);
-
-    setCountries(data);
-
-    setLoading(false);
+  const onRefresh = () => {
+    setRefreshing(true);
+    loadCountries();
   };
 
-  if (loading) {
+  const handlePressCountry = (country) => {
+    navigation.navigate('Detail', { country });
+  };
+
+  if (loading && !refreshing) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator
-          size="large"
-        />
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color="#4CAF50" />
+        <Text style={styles.loadingText}>Cargando países...</Text>
       </View>
     );
   }
 
+  // Dentro de HomeScreen, reemplazar el bloque de error por:
+
+if (error) {
   return (
-    <View style={styles.container}>
-      <Text>
-        Países cargados:
-        {" "}
-        {countries.length}
-      </Text>
-
-<FlatList
-  data={countries}
-  keyExtractor={(item) =>
-    item.cca3
-  }
-  renderItem={({ item }) => (
-    <CountryCard
-      country={item}
-      onPress={() =>
-        navigation.navigate(
-          "Details",
-          {
-            country: item,
-          }
-        )
-      }
-    />
-  )}
-/>
-
+    <View style={styles.centered}>
+      <Text style={styles.errorText}>{error}</Text>
+      <TouchableOpacity onPress={loadCountries} style={styles.retryButton}>
+        <Text style={styles.retryText}>Reintentar</Text>
+      </TouchableOpacity>
     </View>
+  );
+}
+
+// Y agregar estos estilos:
+const styles = StyleSheet.create({
+  // ... estilos existentes
+  retryButton: {
+    backgroundColor: '#4CAF50',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginTop: 16,
+  },
+  retryText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+});
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <SearchBar
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+        placeholder="Buscar por país o capital..."
+      />
+      <FlatList
+        data={filteredCountries}
+        keyExtractor={(item, index) => `${item.name}-${index}`}
+        renderItem={({ item }) => (
+          <CountryCard country={item} onPress={() => handlePressCountry(item)} />
+        )}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FFFFFF" />
+        }
+        ListEmptyComponent={
+          <Text style={styles.emptyText}>No se encontraron países</Text>
+        }
+        contentContainerStyle={styles.list}
+      />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    backgroundColor: '#121212',
   },
-
-  center: {
+  centered: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#121212',
   },
-
-  card: {
-    padding: 15,
-    backgroundColor: "#eee",
-    marginBottom: 10,
-    borderRadius: 10,
+  loadingText: {
+    marginTop: 12,
+    color: '#FFFFFF',
+  },
+  errorText: {
+    color: '#FF6B6B',
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  retryText: {
+    color: '#4CAF50',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textDecorationLine: 'underline',
+  },
+  list: {
+    paddingBottom: 20,
+  },
+  emptyText: {
+    color: '#AAAAAA',
+    textAlign: 'center',
+    marginTop: 40,
+    fontSize: 16,
   },
 });

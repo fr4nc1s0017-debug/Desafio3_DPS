@@ -1,63 +1,30 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-} from "react-native";
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 
-export default function InfoCard({
-  title,
-  value,
-  icon,
-}) {
+export default function InfoCard({ title, data }) {
   return (
     <View style={styles.card}>
-      <View style={styles.row}>
-        <Text style={styles.icon}>
-          {icon}
-        </Text>
-
-        <View>
-          <Text style={styles.title}>
-            {title}
-          </Text>
-
-          <Text style={styles.value}>
-            {value}
-          </Text>
-        </View>
-      </View>
+      <Text style={styles.title}>{title}</Text>
+      <Text style={styles.data}>{data}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "#fff",
-    borderRadius: 18,
-    padding: 18,
-    marginBottom: 15,
-    elevation: 3,
+    backgroundColor: '#2C2C2C',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 12,
   },
-
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
-  icon: {
-    fontSize: 35,
-    marginRight: 15,
-  },
-
   title: {
-    color: "gray",
+    color: '#BBBBBB',
     fontSize: 14,
-    textTransform: "uppercase",
-    marginBottom: 5,
+    marginBottom: 4,
   },
-
-  value: {
-    fontSize: 20,
-    fontWeight: "bold",
+  data: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

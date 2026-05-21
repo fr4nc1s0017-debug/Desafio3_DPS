@@ -1,192 +1,148 @@
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
+  ScrollView,
   ActivityIndicator,
-  TouchableOpacity,
-  Linking,
-} from "react-native";
-import InfoCard from "../components/InfoCard";
-import MapView, { Marker } from "react-native-maps";
-
-import { useEffect, useState } from "react";
-
-import { getWeather } from "../services/weatherApi";
+  Dimensions,
+} from 'react-native';
+import MapView, { Marker } from 'react-native-maps';
+import { fetchWeatherByCapital } from '../services/weatherApi';
+import WeatherCard from '../components/WeatherCard';
+import InfoCard from '../components/InfoCard';
 
 export default function DetailScreen({ route }) {
   const { country } = route.params;
-
-  const capital = country?.capital?.[0];
-
-  const lat = country?.capitalInfo?.latlng?.[0];
-  const lng = country?.capitalInfo?.latlng?.[1];
-
   const [weather, setWeather] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [weatherLoading, setWeatherLoading] = useState(false);
+  const [weatherError, setWeatherError] = useState(null);
+  const [mapRegion, setMapRegion] = useState(null);
 
-  const fetchWeather = async () => {
-    try {
-      const data = await getWeather(capital);
-
-      setWeather(data);
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Obtener clima
   useEffect(() => {
-    if (capital) {
-      fetchWeather();
-    }
-  }, []);
+    const loadWeather = async () => {
+      if (!country.capital || country.capital === 'Sin capital') {
+        setWeatherError('Esta capital no tiene datos climáticos');
+        return;
+      }
+      setWeatherLoading(true);
+      setWeatherError(null);
+      try {
+        const data = await fetchWeatherByCapital(country.capital);
+        if (data) setWeather(data);
+      } catch (err) {
+        setWeatherError(err.message);
+      } finally {
+        setWeatherLoading(false);
+      }
+    };
+    loadWeather();
+  }, [country.capital]);
 
-  if (!country) {
-    return (
-      <View style={styles.center}>
-        <Text>No hay información</Text>
-      </View>
-    );
-  }
+  // Configurar región del mapa si existen coordenadas
+  useEffect(() => {
+    if (country.coords && country.coords.length === 2) {
+      setMapRegion({
+        latitude: country.coords[0],
+        longitude: country.coords[1],
+        latitudeDelta: 5,
+        longitudeDelta: 5,
+      });
+    }
+  }, [country.coords]);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>
-        {country.name?.common}
-      </Text>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      {/* Nombre y capital */}
+      <InfoCard title="País" data={country.name} />
+      <InfoCard title="Capital" data={country.capital} />
 
-      <Text style={styles.capital}>
-        Capital: {capital}
-      </Text>
+      {/* Mapa interactivo */}
+      <View style={styles.mapContainer}>
+        <Text style={styles.sectionTitle}>📍 Ubicación de la capital</Text>
+        {country.coords ? (
+          <MapView
+            style={styles.map}
+            region={mapRegion}
+            showsUserLocation={false}
+            zoomEnabled={true}
+          >
+            <Marker
+              coordinate={{
+                latitude: country.coords[0],
+                longitude: country.coords[1],
+              }}
+              title={country.capital}
+              description={country.name}
+            />
+          </MapView>
+        ) : (
+          <View style={styles.noMap}>
+            <Text style={styles.noMapText}>
+              No hay coordenadas disponibles para esta capital.
+            </Text>
+          </View>
+        )}
+      </View>
 
-      {lat && lng && (
-        <MapView
-          style={styles.map}
-          provider="google"
-          initialRegion={{
-            latitude: lat,
-            longitude: lng,
-            latitudeDelta: 5,
-            longitudeDelta: 5,
-          }}
-        >
-          <Marker
-            coordinate={{
-              latitude: lat,
-              longitude: lng,
-            }}
-            title={capital}
-          />
-        </MapView>
-      )}
+      {/* Clima actual */}
+      <View style={styles.weatherSection}>
+        <Text style={styles.sectionTitle}>🌤️ Clima actual en {country.capital}</Text>
+        <WeatherCard
+          weather={weather}
+          loading={weatherLoading}
+          error={weatherError}
+        />
+      </View>
 
-      <InfoCard
-        title="Moneda"
-        value={
-          Object.values(country.currencies || {})[0]
-            ?.name || "No disponible"
-        }
-        icon="💰"
-      />
-
-      <InfoCard
-        title="Idioma"
-        value={
-          Object.values(country.languages || {})
-            ?.join(", ") || "No disponible"
-        }
-        icon="🗣"
-      />
-
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() =>
-          Linking.openURL(
-            `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`
-          )
-        }
-      >
-        <Text style={styles.buttonText}>
-          Abrir en Google Maps
-        </Text>
-      </TouchableOpacity>
-
-      {loading ? (
-        <ActivityIndicator size="large" />
-      ) : weather ? (
-        <View style={styles.weatherBox}>
-          <Text>
-            🌡 Temperatura: {weather.main?.temp}°C
-          </Text>
-
-          <Text>
-            ☁ Clima: {weather.weather?.[0]?.description}
-          </Text>
-
-          <Text>
-            💧 Humedad: {weather.main?.humidity}%
-          </Text>
-
-          <Text>
-            🌬 Viento: {weather.wind?.speed} m/s
-          </Text>
-        </View>
-      ) : (
-        <Text>No se pudo cargar el clima</Text>
-      )}
-    </View>
+      {/* Información adicional del país (extra) */}
+      <InfoCard title="Región" data={country.region || 'N/A'} />
+      <InfoCard title="Subregión" data={country.subregion || 'N/A'} />
+      <InfoCard title="Población" data={country.population?.toLocaleString() || 'N/A'} />
+      <InfoCard title="Moneda(s)" data={country.currencies} />
+      <InfoCard title="Idiomas" data={country.languages} />
+    </ScrollView>
   );
 }
 
+const { width, height } = Dimensions.get('window');
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 15,
-    backgroundColor: "#fff",
+    backgroundColor: '#121212',
   },
-
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    marginBottom: 10,
+  content: {
+    padding: 16,
+    paddingBottom: 40,
   },
-
-  capital: {
+  sectionTitle: {
+    color: '#FFFFFF',
     fontSize: 20,
-    marginBottom: 15,
+    fontWeight: 'bold',
+    marginBottom: 12,
   },
-
+  mapContainer: {
+    marginBottom: 24,
+  },
   map: {
-    width: "100%",
-    height: 300,
-    borderRadius: 10,
+    width: '100%',
+    height: 250,
+    borderRadius: 16,
+    overflow: 'hidden',
   },
-
-  weatherBox: {
-    marginTop: 20,
-    backgroundColor: "#f2f2f2",
-    padding: 15,
-    borderRadius: 10,
-    gap: 10,
+  noMap: {
+    backgroundColor: '#2C2C2C',
+    borderRadius: 16,
+    height: 200,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-
-  center: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+  noMapText: {
+    color: '#AAAAAA',
+    textAlign: 'center',
   },
-
-  button: {
-    backgroundColor: "#007AFF",
-    padding: 12,
-    borderRadius: 10,
-    marginTop: 15,
-    alignItems: "center",
-  },
-
-  buttonText: {
-    color: "#fff",
-    fontWeight: "bold",
+  weatherSection: {
+    marginBottom: 16,
   },
 });

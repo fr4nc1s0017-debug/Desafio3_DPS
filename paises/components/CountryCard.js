@@ -1,37 +1,13 @@
-import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  StyleSheet,
-} from "react-native";
+import React from 'react';
+import { TouchableOpacity, Text, Image, StyleSheet, View } from 'react-native';
 
-export default function CountryCard({
-  country,
-  onPress,
-}) {
+export default function CountryCard({ country, onPress }) {
   return (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={onPress}
-    >
-      <Image
-        source={{
-          uri:
-            country.flags?.png,
-        }}
-        style={styles.flag}
-      />
-
+    <TouchableOpacity style={styles.card} onPress={onPress}>
+      <Image source={{ uri: country.flag }} style={styles.flag} />
       <View style={styles.info}>
-        <Text style={styles.name}>
-          {country.name?.common}
-        </Text>
-
-        <Text style={styles.capital}>
-          {country.capital?.[0] ||
-            "Sin capital"}
-        </Text>
+        <Text style={styles.countryName}>{country.name}</Text>
+        <Text style={styles.capital}>{country.capital}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -39,34 +15,30 @@ export default function CountryCard({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 20,
-    marginBottom: 15,
-    flexDirection: "row",
-    alignItems: "center",
-    elevation: 3,
+    flexDirection: 'row',
+    backgroundColor: '#2C2C2C',
+    marginHorizontal: 16,
+    marginVertical: 6,
+    padding: 12,
+    borderRadius: 12,
+    alignItems: 'center',
   },
-
   flag: {
-    width: 90,
-    height: 60,
-    borderRadius: 10,
+    width: 50,
+    height: 35,
+    borderRadius: 6,
+    marginRight: 12,
   },
-
   info: {
-    marginLeft: 15,
     flex: 1,
   },
-
-  name: {
-    fontSize: 20,
-    fontWeight: "bold",
+  countryName: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
-
   capital: {
-    color: "gray",
-    marginTop: 5,
-    fontSize: 16,
+    color: '#AAAAAA',
+    fontSize: 14,
   },
 });
